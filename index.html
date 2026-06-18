@@ -120,7 +120,12 @@
                 let [key, val] = pair.split(':');
                 if (key === 't') document.getElementById('lblTemp').innerText = val;
                 if (key === 'l') document.getElementById('lblLight').innerText = val;
-                if (key === 'c') document.getElementById('lblCore').innerText = val; // <-- НОВАЯ СТРОКА РАЗБОРА
+                if (key === 'c') document.getElementById('lblCore').innerText = val;
+                
+                // ИСПРАВЛЕНИЕ: Автоматически выставляем комбобокс в нужный режим
+                if (key === 'rm') document.getElementById('ringMode').value = val;
+                // Автоматически выставляем ползунок яркости в нужное положение
+                if (key === 'b') document.getElementById('brightRange').value = val;
             });
         }
 
