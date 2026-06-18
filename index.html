@@ -137,6 +137,15 @@
                 sendCmd("wifi:" + ssid + ";" + pass);
             }
         }
+
+        // Автоматически заполняем списки часов от 0 до 23 при открытии страницы
+        for (let i = 0; i < 24; i++) {
+            document.getElementById('timeOn').innerHTML += `<option value="${i}">${i}:00</option>`;
+            document.getElementById('timeOff').innerHTML += `<option value="${i}">${i}:00</option>`;
+        }
+        // Выставим дефолтные значения в интерфейсе (8 утра и 23 вечера)
+        document.getElementById('timeOn').value = 8;
+        document.getElementById('timeOff').value = 23;
     </script>
 </body>
 </html>
