@@ -22,6 +22,7 @@
         <h3>📊 Датчики в реальном времени</h3>
         <p>Температура: <b id="lblTemp">--.-</b> °C</p>
         <p>Освещенность: <b id="lblLight">--.-</b> %</p>
+        <p style="color: #ffb703; font-size: 14px;">Температура процессора ESP32-C3: <b id="lblCore">--.-</b> °C</p>
     </div>
 
     <!-- НАСТРОЙКИ КОЛЬЦА И ЯРКОСТИ -->
@@ -119,6 +120,7 @@
                 let [key, val] = pair.split(':');
                 if (key === 't') document.getElementById('lblTemp').innerText = val;
                 if (key === 'l') document.getElementById('lblLight').innerText = val;
+                if (key === 'c') document.getElementById('lblCore').innerText = val; // <-- НОВАЯ СТРОКА РАЗБОРА
             });
         }
 
