@@ -54,21 +54,27 @@
             <button onclick="sendCmd('ri=1')">🔁 Инверсия Кольца</button>
             <button onclick="sendCmd('ri=0')">Норма Кольцо</button>
             <button onclick="sendCmd('ti=1')">🔁 Инверсия Цифр</button>
-            <button onclick="sendCmd('ti=0')">Норма Цифры</button>
+            <button onclick="sendCmd('ti=0')">Норма Цивры</button>
         </div>
         <hr style="border-color:#444; margin: 15px 0;">
+        
+        <!-- ДОРАБОТКА: НАСТРОЙКА ЧАСОВ НОЧНОГО СНА -->
+        <h3>🌙 Ночной режим кольца</h3>
         <div class="grid">
-            <button onclick="sendCmd('rad=1')">🌙 Ночной сон кольца</button>
-            <button onclick="sendCmd('rad=0')">Всегда горит</button>
+            <button onclick="sendCmd('rad=1')">✔️ Активировать автовыключение</button>
+            <button onclick="sendCmd('rad=0')">❌ Всегда горит</button>
         </div>
-    </div>
-
-    <!-- НАСТРОЙКА WI-FI РОУТЕРА -->
-    <div class="card">
-        <h3>📶 Настройка новой сети Wi-Fi</h3>
-        <input type="text" id="wifiSSID" placeholder="Название Wi-Fi (SSID)">
-        <input type="password" id="wifiPASS" placeholder="Пароль">
-        <button style="background: #2a9d8f;" onclick="saveWiFi()">💾 Сохранить в память часов</button>
+        
+        <div class="grid" style="margin-top: 10px; align-items: center;">
+            <div>
+                <label style="font-size: 12px; color: #aaa;">Выключать в:</label>
+                <select id="timeOff" onchange="sendCmd('r_off=' + this.value)"></select>
+            </div>
+            <div>
+                <label style="font-size: 12px; color: #aaa;">Включать в:</label>
+                <select id="timeOn" onchange="sendCmd('r_on=' + this.value)"></select>
+            </div>
+        </div>
     </div>
 
     <!-- СКРИПТ СВЯЗИ WEB-BLE -->
