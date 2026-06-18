@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управления Часами</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: #fff; text-align: center; padding: 20px; }
+        .card { background: #2a2a2a; border-radius: 10px; padding: 15px; margin: 15px auto; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        button { background: #00b4d8; color: white; border: none; padding: 12px 24px; font-size: 16px; border-radius: 5px; cursor: pointer; width: 100%; margin: 5px 0; }
+        select, input { width: 100%; padding: 10px; margin: 8px 0; box-sizing: border-box; background: #333; color: #fff; border: 1px solid #444; border-radius: 5px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>Умные часы ESP32-C3</h2>
+    <button id="connectBtn" onclick="connectBLE()">🔌 Подключиться по Bluetooth</button>
+
+    <!-- ТЕЛЕМЕТРИЯ ДАТЧИКОВ -->
+    <div class="card">
+        <h3>📊 Датчики в реальном времени</h3>
+        <p>Температура: <b id="lblTemp">--.-</b> °C</p>
+        <p>Освещенность: <b id="lblLight">--.-</b> %</p>
+    </div>
+
+    <!-- НАСТРОЙКИ КОЛЬЦА И ЯРКОСТИ -->
+    <div class="card">
+        <h3>⚙️ Настройки индикации</h3>
+        <label>Режим секундного кольца:</label>
+        <select id="ringMode" onchange="sendCmd('rm=' + this.value)">
+            <option value="0">Выключено</option>
+            <option value="1">Одиночная точка</option>
+            <option value="2">Заполняющийся шлейф</option>
+            <option value="3">Кремлёвский циферблат</option>
+            <option value="4">Комета с хвостом</option>
+            <option value="5">Гибрид: Метки + Комета</option>
+            <option value="6">Вращающийся крест</option>
+        </select>
+
+        <label>Базовая яркость часов (0-10):</label>
+        <input type="range" min="0" max="10" id="brightRange" oninput="sendCmd('br=' + this.value)">
+        
+        <div class="grid" style="margin-top: 10px;">
+            <button onclick="sendCmd('ab=1')">☀️ Автояркость ВКЛ</button>
+            <button onclick="sendCmd('ab=0')">🌙 Ручной режим</button>
+        </div>
+    </div>
+
+    <!-- ИНВЕРСИИ И НОЧНОЙ РЕЖИМ -->
+    <div class="card">
+        <h3>🔄 Режимы отображения</h3>
+        <div class="grid">
+            <button onclick="sendCmd('ri=1')">🔁 Инверсия Кольца</button>
+            <button onclick="sendCmd('ri=0')">Норма Кольцо</button>
+            <button onclick="sendCmd('ti=1')">🔁 Инверсия Цифр</button>
+            <button onclick="sendCmd('ti=0')">Норма Цифры</button>
+        </div>
+        <hr style="border-color:#444; margin: 15px 0;">
+        <div class="grid">
+            <button onclick="sendCmd('rad=1')">🌙 Ночной сон кольца</button>
+            <button onclick="sendCmd('rad=0')">Всегда горит</button>
+        </div>
+    </div>
+
+    <!-- НАСТРОЙКА WI-FI РОУТЕРА -->
+    <div class="card">
+        <h3>📶 Настройка новой сети Wi-Fi</h3>
+        <input type="text" id="wifiSSID" placeholder="Название Wi-Fi (SSID)">
+        <input type="password" id="wifiPASS" placeholder="Пароль">
+        <button style="background: #2a9d8f;" onclick="saveWiFi()">💾 Сохранить в память часов</button>
+    </div>
+
+    <!-- СКРИПТ СВЯЗИ WEB-BLE -->
+    <script>
+        let bleDevice = null;
+        let bleCharacteristic = null;
+        const SERVICE_UUID = "4fafc201-75d5-11ed-a1eb-0242ac120002";
+        const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+        async function connectBLE() {
+            try {
+                console.log("Запрос устройства Bluetooth...");
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: "ESP32-C3_Smart_Clock" }],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                console.log("Подключение к GATT серверу...");
+                const server = await bleDevice.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+                // Включаем уведомления (прием телеметрии от часов)
+                await bleCharacteristic.startNotifications();
+                bleCharacteristic.addEventListener('characteristicvaluechanged', handleTelemetry);
+
+                document.getElementById("connectBtn").innerText = "✅ Подключено по BLE";
+                document.getElementById("connectBtn").style.background = "#2a9d8f";
+                console.log("Успешно подключено!");
+            } catch (error) {
+                console.log("Ошибка подключения: " + error);
+            }
+        }
+
+        // Прием и разбор строки телеметрии вида t:24.5;l:45.2;b:3...
+        function handleTelemetry(event) {
+            let enc = new TextDecoder("utf-8");
+            let dataStr = enc.decode(event.target.value);
+            let pairs = dataStr.split(';');
+            
+            pairs.forEach(pair => {
+                let [key, val] = pair.split(':');
+                if (key === 't') document.getElementById('lblTemp').innerText = val;
+                if (key === 'l') document.getElementById('lblLight').innerText = val;
+            });
+        }
+
+        // Отправка команды на часы
+        async function sendCmd(cmdText) {
+            if (!bleCharacteristic) return;
+            let enc = new TextEncoder();
+            await bleCharacteristic.writeValue(enc.encode(cmdText));
+            console.log("Отправлена команда: " + cmdText);
+        }
+
+        function saveWiFi() {
+            let ssid = document.getElementById("wifiSSID").value;
+            let pass = document.getElementById("wifiPASS").value;
+            if(ssid) {
+                sendCmd("wifi:" + ssid + ";" + pass);
+            }
+        }
+    </script>
+</body>
+</html>
