@@ -76,6 +76,17 @@
                 <select id="timeOn" onchange="sendCmd('r_on=' + this.value)"></select>
             </div>
         </div>
+
+        <!-- НАСТРОЙКА WI-FI РОУТЕРА -->
+        <div class="card">
+            <h3>📶 Настройка сети Wi-Fi</h3>
+            <p style="font-size: 14px; color: #aaa; text-align: left; margin-bottom: 5px;">
+                Текущая сеть в памяти: <b id="lblCurrentSsid" style="color: #00b4d8;">---</b>
+            </p>
+            <input type="text" id="wifiSSID" placeholder="Новое название Wi-Fi (SSID)">
+            <input type="password" id="wifiPASS" placeholder="Новый пароль">
+            <button style="background: #2a9d8f;" onclick="saveWiFi()">💾 Сохранить и перезагрузить часы</button>
+        </div>
     </div>
 
     <!-- СКРИПТ СВЯЗИ WEB-BLE -->
@@ -126,6 +137,7 @@
                 if (key === 'rm') document.getElementById('ringMode').value = val;
                 // Автоматически выставляем ползунок яркости в нужное положение
                 if (key === 'b') document.getElementById('brightRange').value = val;
+                if (key === 's') document.getElementById('lblCurrentSsid').innerText = val ? val : "Не задана";
             });
         }
 
