@@ -101,6 +101,7 @@
         let bleCharacteristic = null;
         const SERVICE_UUID = "4fafc201-75d5-11ed-a1eb-0242ac120002";
         const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+        let lastDiscoveredStr = "";
 
         async function connectBLE() {
             try {
@@ -131,32 +132,49 @@
         function handleTelemetry(event) {
             let enc = new TextDecoder("utf-8");
             let dataStr = enc.decode(event.target.value);
+            
+            // Отладочный лог в консоль браузера (чтобы вы могли нажать F12 на ПК и увидеть, что прилетело)
+            console.log("BLE RAW DATA:", dataStr); 
+            
             let pairs = dataStr.split(';');
             
             pairs.forEach(pair => {
-                let [key, val] = pair.split(':');
+                let parts = pair.split(':');
+                if (parts.length < 2) return;
+                
+                let key = parts[0];
+                let val = parts[1];
+                
                 if (key === 't') document.getElementById('lblTemp').innerText = val;
                 if (key === 'l') document.getElementById('lblLight').innerText = val;
                 if (key === 'c') document.getElementById('lblCore').innerText = val;
-                
-                // ИСПРАВЛЕНИЕ: Автоматически выставляем комбобокс в нужный режим
                 if (key === 'rm') document.getElementById('ringMode').value = val;
-                // Автоматически выставляем ползунок яркости в нужное положение
                 if (key === 'b') document.getElementById('brightRange').value = val;
                 if (key === 's') document.getElementById('lblCurrentSsid').innerText = val ? val : "Не задана";
-                if (key === 'n' && val && val !== lastDiscoveredStr) {
-                    lastDiscoveredStr = val;
-                    let select = document.getElementById('wifiSSID');
-                    let currentSelection = select.value; // Запоминаем, что юзер уже выбрал кликом
-                    
-                    select.innerHTML = '<option value="">-- Выберите Wi-Fi сеть --</option>';
-                    let networks = val.split(',');
-                    networks.forEach(net => {
-                        if(net.trim().length > 0) {
-                            select.innerHTML += `<option value="${net}">${net}</option>`;
-                        }
-                    });
-                    if (currentSelection) select.value = currentSelection; // Возвращаем выбор на место
+                
+                // ОБНОВЛЕННЫЙ НАДЕЖНЫЙ СБОРЩИК КОМБОБОКСА СЕТЕЙ:
+                if (key === 'n' && val && val.trim().length > 0) {
+                    // Если список сетей реально изменился по сравнению с прошлым разом
+                    if (val !== lastDiscoveredStr) {
+                        lastDiscoveredStr = val;
+                        let select = document.getElementById('wifiSSID');
+                        let currentSelection = select.value; // Запоминаем текущий выбор пользователя
+                        
+                        // Полностью очищаем список сетей и пишем заголовок
+                        select.innerHTML = '<option value="">-- Выберите Wi-Fi сеть --</option>';
+                        
+                        // Дробим прилетевшие сети по запятой
+                        let networks = val.split(',');
+                        networks.forEach(net => {
+                            let cleanNet = net.trim();
+                            if (cleanNet.length > 0) {
+                                select.innerHTML += `<option value="${cleanNet}">${cleanNet}</option>`;
+                            }
+                        });
+                        
+                        // Если пользователь уже что-то выбрал, возвращаем его выбор на место
+                        if (currentSelection) select.value = currentSelection;
+                    }
                 }
             });
         }
