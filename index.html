@@ -23,6 +23,13 @@
         <p>Температура: <b id="lblTemp">--.-</b> °C</p>
         <p>Освещенность: <b id="lblLight">--.-</b> %</p>
         <p style="color: #ffb703; font-size: 14px;">Температура процессора ESP32-C3: <b id="lblCore">--.-</b> °C</p>
+        <!-- БЛОК КАЛИБРОВКИ ТЕМПЕРАТУРЫ -->
+        <hr style="border-color:#444; margin: 10px 0;">
+        <label style="font-size: 12px; color: #aaa; display: block; text-align: left;">Поправка датчика температуры NTC (°C):</label>
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+            <input type="range" min="-5.0" max="5.0" step="0.1" id="offsetRange" style="margin: 0; flex-grow: 1;" oninput="sendCmd('to=' + this.value); document.getElementById('lblOffsetVal').innerText = (this.value > 0 ? '+' : '') + this.value;">
+            <span id="lblOffsetVal" style="font-weight: bold; color: #00b4d8; min-width: 45px; text-align: right;">0.0</span>
+        </div>
     </div>
 
     <!-- НАСТРОЙКИ КОЛЬЦА И ЯРКОСТИ -->
@@ -151,6 +158,10 @@
                 if (key === 'rm') document.getElementById('ringMode').value = val;
                 if (key === 'b') document.getElementById('brightRange').value = val;
                 if (key === 's') document.getElementById('lblCurrentSsid').innerText = val ? val : "Не задана";
+                if (key === 'o') {
+                    document.getElementById('offsetRange').value = val;
+                    document.getElementById('lblOffsetVal').innerText = (parseFloat(val) > 0 ? '+' : '') + val;
+                }
                 
                 // ОБНОВЛЕННЫЙ НАДЕЖНЫЙ СБОРЩИК КОМБОБОКСА СЕТЕЙ:
                 if (key === 'n' && val && val.trim().length > 0) {
